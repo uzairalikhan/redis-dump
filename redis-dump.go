@@ -33,6 +33,10 @@ func init() {
 		Addr:     host,
 		Password: "", // no password set
 		DB:       0,  // use default DB
+		MaxRetries: 2,
+		DialTimeout: 10 * time.Second, //default timeout is 5sec
+		ReadTimeout: 5 * time.Second, //Default 3sec
+		WriteTimeout: 5 * time.Second, //Default 3sec
 	})	
 	_, err := client.Ping().Result()
 	if err != nil {
@@ -120,7 +124,7 @@ func sendResponse(err error) {
 func sgd(bytes []byte) {	
 		// Random 10 character string key for data to be stored in redis
 		randString := utils.RandStringBytes(10)
-		logrus.Infof("Storing value against key : %s", randString)
+		//logrus.Infof("Storing value against key : %s", randString)
 		err := client.Set(randString, bytes, 10*time.Minute).Err()
 		if err != nil {
 			logrus.Errorf("Error while saving binary data in redis for key: %s", randString)
