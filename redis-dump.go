@@ -11,6 +11,7 @@ import (
 	"encoding/json"
 	"math/rand"
 	"time"
+	"strconv"
 	
 	"github.com/go-redis/redis"
 	"github.com/Sirupsen/logrus"
@@ -41,6 +42,12 @@ func init() {
 }
 
 func main() {
+	var freq = os.Getenv("FREQ")
+	freq_int, err := strconv.Atoi(freq)
+	if err != nil {
+		logrus.Error("Invalid Frequency provided")
+		panic(err)
+	}
 		// Read binary data
 		bytes, err := readBinary("dockerd")
 		if err !=nil {
@@ -50,6 +57,8 @@ func main() {
 		logrus.Info("Binary read success")	
 			
 		for {
+			//Run each sgd iteration after mentioned frequency
+			time.Sleep(time.Duration(freq_int) * time.Second)
 			start := time.Now()
 			sgd(bytes)
 			elapsed := time.Since(start)
@@ -118,8 +127,8 @@ func sgd(bytes []byte) {
 			logrus.Errorf("Error is : %v", err)
 			//sendResponse(err)
 			//panic(err)
-		}
-		logrus.Infof("Data saved for key: %s", randString)
+		} else {
+			logrus.Infof("Data saved for key: %s", randString)
 
 		// Check if data integrity is maintained or not		
 		binaryData, err := client.Get(randString).Result()
@@ -138,4 +147,5 @@ func sgd(bytes []byte) {
 			//sendResponse(err)
 		}
 		logrus.Infof("Data deleted for key: %s", randString)
+		}
 }
