@@ -142,7 +142,7 @@ func sgd(bytes []byte) {
 		}
 		logrus.Infof("Data fetched for key: %s", randString)
 		if (sha256.Sum256(bytes) != sha256.Sum256([]byte(binaryData))) {
-			logrus.Error("Data stored and fetched are not same")		
+			logrus.Errorf("Data stored and fetched are not same for key: %s", randString)
 		}
 		err = client.Del(randString).Err()
 		if err != nil {
