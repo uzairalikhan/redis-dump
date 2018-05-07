@@ -53,18 +53,19 @@ func main() {
 		panic(err)
 	}
 		// Read binary data
-		bytes, err := readBinary("dockerd")
-		if err !=nil {
-			logrus.Errorf("Error while reading binary data")
-			panic(err)
-		}
-		logrus.Info("Binary read success")	
+		// bytes, err := readBinary("dockerd")
+		// if err !=nil {
+		// 	logrus.Errorf("Error while reading binary data")
+		// 	panic(err)
+		// }
+		// logrus.Info("Binary read success")
 			
 		for {
 			//Run each sgd iteration after mentioned frequency
 			time.Sleep(time.Duration(freq_int) * time.Second)
+			randValue := utils.RandStringBytes(20)
 			start := time.Now()
-			sgd(bytes)
+			sgd([]byte(randValue))
 			elapsed := time.Since(start)
 			logrus.Infof("SGD operation took %s", elapsed)
 		}						
@@ -121,29 +122,30 @@ func sendResponse(err error) {
 	fmt.Println("response Body:", string(body))
 }
 
-func sgd(bytes []byte) {	
+func sgd(value []byte) {
 		// Random 10 character string key for data to be stored in redis
 		randString := utils.RandStringBytes(10)
 		//logrus.Infof("Storing value against key : %s", randString)
-		err := client.Set(randString, bytes, 10*time.Minute).Err()
+		err := client.Set(randString, value, 10*time.Minute).Err()
 		if err != nil {
-			logrus.Errorf("Error while saving binary data in redis for key: %s", randString)
+			logrus.Errorf("Error while saving data in redis for key: %s", randString)
 			logrus.Errorf("Error is : %v", err)
 			//sendResponse(err)
 			//panic(err)
 		} else {
-			logrus.Infof("Data saved for key: %s", randString)
+			logrus.Infof("Data saved for key: %s  is   %s", randString, value)
 
 		// Check if data integrity is maintained or not		
-		binaryData, err := client.Get(randString).Result()
+		fetchedData, err := client.Get(randString).Result()
 		if err != nil {
 			logrus.Errorf("Error while reading data from redis for key: %s", randString)
 			logrus.Errorf("Error is : %v", err)
 		}
-		logrus.Infof("Data fetched for key: %s", randString)
-		if (sha256.Sum256(bytes) != sha256.Sum256([]byte(binaryData))) {
-			logrus.Errorf("Data stored and fetched are not same for key: %s", randString)
+		logrus.Infof("Data fetched for key: %s    is     %s", randString, fetchedData)
+		if (sha256.Sum256(value) != sha256.Sum256([]byte(fetchedData))){
+			logrus.Errorf("Data is not same for key: %s , expected value: %s  , recieved value  %s", randString, value, fetchedData)
 		}
+		
 		err = client.Del(randString).Err()
 		if err != nil {
 			logrus.Errorf("Error while deleting binary data from redis for key: %s", randString)
