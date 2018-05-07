@@ -27,24 +27,13 @@ var client *redis.Client
 
 func init() {
 	// log level hierarchy anything that is info or above (debug, info, warn, error, fatal, panic). Default Info.
-	switch loglevel := os.Getenv("LOGLEVEL"); loglevel {
-		case "debug":
-			logrus.SetLevel(logrus.DebugLevel)
-		case "info":
-			logrus.SetLevel(logrus.InfoLevel)
-		case "warn":
-			logrus.SetLevel(logrus.WarnLevel)
-		case "error":
-			logrus.SetLevel(logrus.ErrorLevel)
-		case "fatal":
-			logrus.SetLevel(logrus.FatalLevel)
-		case "panic":
-			logrus.SetLevel(logrus.PanicLevel)
-		default:
-			logrus.SetLevel(logrus.InfoLevel)
+	level, err := logrus.ParseLevel(utils.GetEnv("LOGLEVEL", "info"))
+	if err != nil {
+		logrus.Errorf("Invalid Log Level")
+		panic(err)
 	}
-
-	var host = os.Getenv("HOST")
+	logrus.SetLevel(level)
+	var host = utils.GetEnv("HOST", "0.0.0.0:6379")
 	rand.Seed(time.Now().UnixNano())	
 	
 	client = redis.NewClient(&redis.Options{
@@ -56,16 +45,16 @@ func init() {
 		ReadTimeout: 5 * time.Second, //Default 3sec
 		WriteTimeout: 5 * time.Second, //Default 3sec
 	})	
-	_, err := client.Ping().Result()
+	_, err = client.Ping().Result()
 	if err != nil {
 		logrus.Panicf("Error while connecting to redis: \n %s", err)
 		panic(err)
 	}
-	logrus.Debugf("Redis connected to %s", "0.0.0.0:6379")
+	logrus.Debugf("Redis connected to %s", host)
 }
 
 func main() {
-	var freq = os.Getenv("FREQ")
+	var freq = utils.GetEnv("FREQ", "1")
 	freqInt, err := strconv.Atoi(freq)
 	if err != nil {
 		logrus.Errorf("Invalid Frequency provided")
@@ -114,8 +103,9 @@ func readBinary(filename string) ([]byte, error){
 
 func sendResponse(err error) {
 	//url := "http://172.16.23.248:4000/node/log"
-	url := os.Getenv("LOGURL")
-	nodeID := os.Getenv("NODEID")
+	url := utils.GetEnv("LOGURL", "http://0.0.0.0:4000/node/log")
+	defaultNode, _ := os.Hostname()
+	nodeID := utils.GetEnv("NODEID", defaultNode)
 	logrus.Debugf("Sending response to URL:>", url)
 
 	data := stats{nodeID, err} 
