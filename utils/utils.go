@@ -1,15 +1,11 @@
 package utils
 
 import (
-	"math/rand"
-	"time"
+    "math/rand"
+    "os"
 )
 
 const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-
-func init() {
-    rand.Seed(time.Now().UnixNano())
-}
 
 func RandStringBytes(n int) string {
     b := make([]byte, n)
@@ -17,4 +13,11 @@ func RandStringBytes(n int) string {
         b[i] = letterBytes[rand.Int63() % int64(len(letterBytes))]
     }
     return string(b)
+}
+
+func GetEnv(name, defaultValue string) string {
+    if env := os.Getenv(name); env != "" {
+        return env
+    }
+    return defaultValue
 }
