@@ -12,10 +12,6 @@ import (
 
 const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
-func init() {
-	rand.Seed(time.Now().UnixNano())
-}
-
 func RandStringBytes(n int) string {
 	b := make([]byte, n)
 	for i := range b {
@@ -35,8 +31,8 @@ func CalAvgTime(cycles int, cycleTimes []time.Duration) time.Duration {
 }
 
 func SendResponse(payload []byte) {
-	url := os.Getenv("LOGURL")
-	logrus.Infof("Sending response to URL:>", url)
+	url := GetEnv("LOGURL", "http://0.0.0.0:4000/node/log")
+	logrus.Debugf("Sending response to URL:>", url)
 
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(payload))
 	req.Header.Set("Content-Type", "application/json")
@@ -48,5 +44,12 @@ func SendResponse(payload []byte) {
 	}
 	defer resp.Body.Close()
 
-	logrus.Infof("response Status:", resp.Status)
+	logrus.Debugf("response Status:", resp.Status)
+}
+
+func GetEnv(name, defaultValue string) string {
+	if env := os.Getenv(name); env != "" {
+			return env
+	}
+	return defaultValue
 }

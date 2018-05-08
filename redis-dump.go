@@ -27,7 +27,14 @@ var errors []error
 var cycleTimes []time.Duration
 
 func init() {
-	var host = os.Getenv("HOST")
+	// log level hierarchy anything that is info or above (debug, info, warn, error, fatal, panic). Default Info.
+	level, err := logrus.ParseLevel(utils.GetEnv("LOGLEVEL", "info"))
+	if err != nil {
+		logrus.Errorf("Invalid Log Level")
+		panic(err)
+	}
+	logrus.SetLevel(level)
+	var host = utils.GetEnv("HOST", "0.0.0.0:6379")
 	rand.Seed(time.Now().UnixNano())
 
 	client = redis.NewClient(&redis.Options{
@@ -39,20 +46,22 @@ func init() {
 		ReadTimeout:  5 * time.Second,  //Default 3sec
 		WriteTimeout: 5 * time.Second,  //Default 3sec
 	})
-	_, err := client.Ping().Result()
+	_, err = client.Ping().Result()
 	if err != nil {
-		panic("Error while connecting to redis")
+		logrus.Errorf("Error while connecting to redis: \n %s", err)
+		panic(err)
 	}
-	logrus.Infof("Redis connected to %s", host)
+	logrus.Debugf("Redis connected to %s", host)
 }
 
 func main() {
-	freq, err := strconv.Atoi(os.Getenv("FREQ"))
+	defaultNode, _ := os.Hostname()
+	freq, err := strconv.Atoi(utils.GetEnv("FREQ", "1"))
 	if err != nil {
 		logrus.Error("Invalid Frequency provided")
 		panic(err)
 	}
-	cycles, err := strconv.Atoi(os.Getenv("CYCLES"))
+	cycles, err := strconv.Atoi(utils.GetEnv("CYCLES", "20"))
 	if err != nil {
 		logrus.Error("Invalid Cycles provided")
 		panic(err)
@@ -70,7 +79,7 @@ func main() {
 		if len(cycleTimes) == cycles {
 			avgTime := utils.CalAvgTime(cycles, cycleTimes)
 			payload, err := json.Marshal(Stats{
-				NodeId:       os.Getenv("NODEID"),
+				NodeId:       utils.GetEnv("NODEID", defaultNode),
 				Errors:       errors,
 				Timestamp:    time.Now(),
 				AvgCycleTime: avgTime,
@@ -120,7 +129,7 @@ func sgd(value []byte) {
 		logrus.Errorf("Error is : %v", err)
 		errors = append(errors, err)
 	} else {
-		logrus.Infof("Data saved for key: %s  is   %s", randString, value)
+		logrus.Debugf("Data saved for key: %s  is   %s", randString, value)
 
 		// Check if data integrity is maintained or not
 		fetchedData, err := client.Get(randString).Result()
@@ -129,7 +138,7 @@ func sgd(value []byte) {
 			logrus.Errorf("Error is : %v", err)
 			errors = append(errors, err)
 		}
-		logrus.Infof("Data fetched for key: %s    is     %s", randString, fetchedData)
+		logrus.Debugf("Data fetched for key: %s    is     %s", randString, fetchedData)
 		if sha256.Sum256(value) != sha256.Sum256([]byte(fetchedData)) {
 			logrus.Errorf("Data is not same for key: %s , expected value: %s  , recieved value  %s", randString, value, fetchedData)
 		}
@@ -140,6 +149,6 @@ func sgd(value []byte) {
 			logrus.Errorf("Error is : %v", err)
 			errors = append(errors, err)
 		}
-		logrus.Infof("Data deleted for key: %s", randString)
+		logrus.Debugf("Data deleted for key: %s", randString)
 	}
 }
