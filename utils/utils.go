@@ -12,6 +12,7 @@ import (
 
 const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
+// RandStringBytes ... Generate random bytes
 func RandStringBytes(n int) string {
 	b := make([]byte, n)
 	for i := range b {
@@ -20,6 +21,7 @@ func RandStringBytes(n int) string {
 	return string(b)
 }
 
+// CalAvgTime ... Calculate average time for all cycles
 func CalAvgTime(cycles int, cycleTimes []time.Duration) time.Duration {
 	var avgTime time.Duration
 	for _, ct := range cycleTimes {
@@ -30,6 +32,7 @@ func CalAvgTime(cycles int, cycleTimes []time.Duration) time.Duration {
 	return avgTime
 }
 
+// SendResponse ... Send dump response to mentioned url
 func SendResponse(payload []byte) {
 	url := GetEnv("LOGURL", "http://0.0.0.0:4000/node/log")
 	logrus.Debugf("Sending response to URL:>", url)
@@ -47,9 +50,10 @@ func SendResponse(payload []byte) {
 	logrus.Debugf("response Status:", resp.Status)
 }
 
+// GetEnv ... Get env by its name, or return default value
 func GetEnv(name, defaultValue string) string {
 	if env := os.Getenv(name); env != "" {
-			return env
+		return env
 	}
 	return defaultValue
 }

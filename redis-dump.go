@@ -14,8 +14,9 @@ import (
 	"github.com/uzairalikhan/redis-dump/utils"
 )
 
+// Stats ... Store dump information
 type Stats struct {
-	NodeId       string
+	NodeID       string
 	Errors       []error
 	AvgCycleTime time.Duration
 	Timestamp    time.Time
@@ -79,7 +80,7 @@ func main() {
 		if len(cycleTimes) == cycles {
 			avgTime := utils.CalAvgTime(cycles, cycleTimes)
 			payload, err := json.Marshal(Stats{
-				NodeId:       utils.GetEnv("NODEID", defaultNode),
+				NodeID:       utils.GetEnv("NODEID", defaultNode),
 				Errors:       errors,
 				Timestamp:    time.Now(),
 				AvgCycleTime: avgTime,
@@ -110,7 +111,7 @@ func readBinary(filename string) ([]byte, error) {
 		return nil, statsErr
 	}
 
-	var size int64 = stats.Size()
+	var size = stats.Size()
 	bytes := make([]byte, size)
 
 	bufr := bufio.NewReader(file)
